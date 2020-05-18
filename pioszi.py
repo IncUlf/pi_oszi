@@ -1,6 +1,8 @@
 
 # logaritmus berechnen
 import tkinter as tk
+#from tkinter.ttk import Frame, Button, Style
+from tkinter import *
 import math
 
 import RPi.GPIO as GPIO
@@ -106,6 +108,18 @@ def scope(cv, x, step_x, id):
         return round(xwert)
     #ende frequenz_koord(freq)
     
+    korr_faktor=1
+    try:
+       korr_faktor=float(korr_var.get())
+    except:
+        print("Keine gültige Zahl: ",korr_var.get())
+        korr_faktor=1
+        korr_var.set("1")
+    if korr_faktor > 2 or korr_faktor<=0:
+        print("Keine gültige Zahl: ",korr_var.get())
+        korr_faktor=1
+        korr_var.set("1")
+
     if x < len(freqliste)-1:
         if id:
             last_y = cv.coords(id)[-1]
@@ -120,13 +134,15 @@ def scope(cv, x, step_x, id):
         try:
             SoundPlayer.playTone(freqliste[x], 0.75, False, dev)
             #SoundPlayer.playTone(300, 2, False, dev)
+            mp=0
             while SoundPlayer.isPlaying():
                 #print("Warte:..",SoundPlayer.isPlaying())
                 mp=measure_point()
             old_x=x-step_x
             if old_x < 0:
                 old_x=0
-            id = cv.create_line(frequenz_koord(freqliste[old_x]), last_y , frequenz_koord(freqliste[x]), dbv_coordinate(mp), fill = "black", tag="line_point", width=2)
+            messwert.set("Messwert: "+str(round(mp,2))+"V")
+            id = cv.create_line(frequenz_koord(freqliste[old_x]), last_y , frequenz_koord(freqliste[x]), dbv_coordinate(mp*korr_faktor), fill = "black", tag="line_point", width=2)
             x += step_x
         except:
             print("Exception x:",x, "old_x: ",old_x)
@@ -163,8 +179,16 @@ for n in range(270,281,1):
 
 root = tk.Tk()
 root.title("Log Diagramm")
-cv = tk.Canvas(root, width=w+zuschlag, height=h, bg="white")
+
+#Aufbau des Diagrammframes
+dframe=Frame(root, width=w+zuschlag+10, height=h+10)
+dframe.pack()
+sframe=Frame(root, width=w+zuschlag+10, height=100)
+sframe.pack()
+
+cv = tk.Canvas(dframe, width=w+zuschlag, height=h, bg="white")
 cv.pack(padx=5, pady=5)
+
 for n in range (40):
     cv.create_line(1, n*20, w+zuschlag, n*20, fill = "lightblue")
     cv.create_text(1,n*20,text=20-n,anchor="w")
@@ -196,15 +220,30 @@ cv.create_text(lx,h,text=ltext[m+1],anchor="sw")
 cv.create_line(1, h/2, w+zuschlag, h/2, fill = "lightgreen")
 cv.create_text(1,h/2,text="0dBV",anchor="w")
 
-tk.Label(root, text="Freq / 1s/Skt").pack(side=tk.RIGHT)
+#Aufbau Statusframe
+l = tk.Label(sframe, text="Freq / dBV")
+l.grid(row=0, column=5, padx=200)
 
-b = tk.Button(root, text="Stop", command=startstop_callback)
-b.pack()
+messwert = tk.StringVar()
+messwert.set(0)
+messwert_label=tk.Label(sframe, width=17, textvariable=messwert)
+messwert_label.grid(row=0, column=4, padx=5, pady=5)
+
+b = tk.Button(sframe, text="Stop", command=startstop_callback)
+b.grid(row=0, column=3, padx=100)
 
 counter = tk.StringVar()
 counter.set(0)
-freq_label=tk.Label(root, width=17, textvariable=counter)
-freq_label.pack( side=tk.LEFT )
+freq_label=tk.Label(sframe, width=17, textvariable=counter)
+freq_label.grid(row=0, column=0, padx=5, pady=5)
+
+korr_var=StringVar()
+korr_label=tk.Label(sframe, text="Korrekturfator:")
+korr_label.grid(row=0, column=1)
+
+e = Entry(sframe, bg="white",relief=SUNKEN, width=5, textvariable=korr_var)
+korr_var.set(1)
+e.grid(row=0, column=2)
 
 cvjob = None
 scope(cv, 0, step_x, None)
