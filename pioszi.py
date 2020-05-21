@@ -135,13 +135,16 @@ def scope(cv, x, step_x, id):
             SoundPlayer.playTone(freqliste[x], 0.75, False, dev)
             #SoundPlayer.playTone(300, 2, False, dev)
             mp=0
+            messcounter=0
             while SoundPlayer.isPlaying():
                 #print("Warte:..",SoundPlayer.isPlaying())
                 mp=measure_point()
+                messcounter=messcounter+1
             old_x=x-step_x
             if old_x < 0:
                 old_x=0
             messwert.set("Messwert: "+str(round(mp,2))+"V")
+            messpunkte.set("Messpunke: "+str(messcounter))
             id = cv.create_line(frequenz_koord(freqliste[old_x]), last_y , frequenz_koord(freqliste[x]), dbv_coordinate(mp*korr_faktor), fill = "black", tag="line_point", width=2)
             x += step_x
         except:
@@ -178,7 +181,7 @@ for n in range(270,281,1):
 #print("Laenge der Liste: ",len(freqliste))
 
 root = tk.Tk()
-root.title("Log Diagramm")
+root.title("Frequenzgang")
 
 #Aufbau des Diagrammframes
 dframe=Frame(root, width=w+zuschlag+10, height=h+10)
@@ -221,8 +224,13 @@ cv.create_line(1, h/2, w+zuschlag, h/2, fill = "lightgreen")
 cv.create_text(1,h/2,text="0dBV",anchor="w")
 
 #Aufbau Statusframe
-l = tk.Label(sframe, text="Freq / dBV")
-l.grid(row=0, column=5, padx=200)
+l = tk.Label(sframe, text="Freq / dBV", fg = "green")
+l.grid(row=0, column=6, padx=150)
+
+messpunkte = tk.StringVar()
+messpunkte.set(0)
+messpunkte_label=tk.Label(sframe, width=17, textvariable=messpunkte)
+messpunkte_label.grid(row=0, column=5, padx=5, pady=5)
 
 messwert = tk.StringVar()
 messwert.set(0)
