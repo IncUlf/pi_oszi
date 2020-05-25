@@ -108,17 +108,17 @@ def scope(cv, x, step_x, id):
         return round(xwert)
     #ende frequenz_koord(freq)
     
-    korr_faktor=1
+    korr_faktor=1.0
     try:
        korr_faktor=float(korr_var.get())
     except:
         print("Keine gültige Zahl: ",korr_var.get())
-        korr_faktor=1
-        korr_var.set("1")
-    if korr_faktor > 2 or korr_faktor<=0:
+        korr_faktor=1.0
+        korr_var.set("1.0")
+    if korr_faktor > 4 or korr_faktor<=0:
         print("Keine gültige Zahl: ",korr_var.get())
-        korr_faktor=1
-        korr_var.set("1")
+        korr_faktor=1.0
+        korr_var.set("1.0")
 
     if x < len(freqliste)-1:
         if id:
