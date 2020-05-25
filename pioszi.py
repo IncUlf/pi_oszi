@@ -22,7 +22,7 @@ h=800
 nulloffset=800
 faktor=0.81
 
-linienfarbe=["black","red","blue"]
+linienfarbe=["black","red","blue","green","yellow","grey"]
 zuschlag=140
 wh=w/3
 ltext=["10Hz","100Hz","1kHz","10kHz","20kHz"]
