@@ -29,9 +29,11 @@ ltext=["10Hz","100Hz","1kHz","10kHz","20kHz"]
 startstop=1
 cvjob = None
 freqliste=[0]*281
+linedrop=0
 
 def startstop_callback():
     global cvjob
+    global linedrop
     if b["text"] == "Stop":
         b["text"]="Start"
         startstop=0
@@ -41,6 +43,7 @@ def startstop_callback():
     else:
         b["text"]="Stop"
         startstop=1
+        linedrop=1
         scope(cv, 0, step_x, None)       
 #ende startstop_callback()
         
@@ -48,6 +51,7 @@ def startstop_callback():
 def scope(cv, x, step_x, id):
     global cvjob
     global durchgang
+    global linedrop
     
     def measure_point():
         while not GPIO.input(11):
@@ -126,7 +130,9 @@ def scope(cv, x, step_x, id):
         if id:
             last_y = cv.coords(id)[-1]
         else:
-#            cv.delete("line_point")
+            if linedrop == 1:
+                cv.delete("line_point"+str(durchgang)) #Linie wieder löschen
+                linedrop=0
             last_y = h/2
         #x += step_x
         #Hier Ton erzeugen und dann Messen anschließend Frequenz erhoehen step_x entsprechend erhoehen
@@ -141,7 +147,7 @@ def scope(cv, x, step_x, id):
             while SoundPlayer.isPlaying():
                 #print("Warte:..",SoundPlayer.isPlaying())
                 mp=mp+measure_point()
-                messcounter=messcounter+1
+                messcounter += 1
             mp=mp/messcounter #Mittelwert bilden
 
             old_x=x-step_x            
@@ -149,7 +155,7 @@ def scope(cv, x, step_x, id):
                 old_x=0
             messwert.set("Messwert: "+str(round(mp,2))+"V")
             messpunkte.set("Messpunke: "+str(messcounter))
-            id = cv.create_line(frequenz_koord(freqliste[old_x]), last_y , frequenz_koord(freqliste[x]), dbv_coordinate(mp*korr_faktor), fill = linienfarbe[durchgang], tag="line_point", width=2)
+            id = cv.create_line(frequenz_koord(freqliste[old_x]), last_y , frequenz_koord(freqliste[x]), dbv_coordinate(mp*korr_faktor), fill = linienfarbe[durchgang], tag="line_point"+str(durchgang), width=2)
             x += step_x
         except:
             print("Exception x:",x, "old_x: ",old_x)
@@ -158,7 +164,7 @@ def scope(cv, x, step_x, id):
         # hier auch Frequenz zurücksetzen
         x = 0
         id = None
-        durchgang=durchgang+1
+        durchgang += 1
 
 #    cv.after(20, scope, cv, x, step_x, id)
     if startstop==1 and durchgang < len(linienfarbe):
