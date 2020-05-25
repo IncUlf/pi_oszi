@@ -22,6 +22,7 @@ h=800
 nulloffset=800
 faktor=0.81
 
+linienfarbe=["black","red","blue"]
 zuschlag=140
 wh=w/3
 ltext=["10Hz","100Hz","1kHz","10kHz","20kHz"]
@@ -46,6 +47,7 @@ def startstop_callback():
 #def scope(cv, x, step_x, id):
 def scope(cv, x, step_x, id):
     global cvjob
+    global durchgang
     
     def measure_point():
         while not GPIO.input(11):
@@ -120,11 +122,11 @@ def scope(cv, x, step_x, id):
         korr_faktor=1.0
         korr_var.set("1.0")
 
-    if x < len(freqliste)-1:
+    if x < len(freqliste):
         if id:
             last_y = cv.coords(id)[-1]
         else:
-            cv.delete("line_point")
+#            cv.delete("line_point")
             last_y = h/2
         #x += step_x
         #Hier Ton erzeugen und dann Messen anschließend Frequenz erhoehen step_x entsprechend erhoehen
@@ -132,7 +134,7 @@ def scope(cv, x, step_x, id):
         counter.set("Frequenz: "+str(freqliste[x]))
         old_x=0
         try:
-            SoundPlayer.playTone(freqliste[x], 2, False, dev) #hier auch Zeit einstellen
+            SoundPlayer.playTone(freqliste[x], 1, False, dev) #hier auch Zeit einstellen
             #SoundPlayer.playTone(300, 2, False, dev)
             mp=0
             messcounter=0
@@ -147,7 +149,7 @@ def scope(cv, x, step_x, id):
                 old_x=0
             messwert.set("Messwert: "+str(round(mp,2))+"V")
             messpunkte.set("Messpunke: "+str(messcounter))
-            id = cv.create_line(frequenz_koord(freqliste[old_x]), last_y , frequenz_koord(freqliste[x]), dbv_coordinate(mp*korr_faktor), fill = "black", tag="line_point", width=2)
+            id = cv.create_line(frequenz_koord(freqliste[old_x]), last_y , frequenz_koord(freqliste[x]), dbv_coordinate(mp*korr_faktor), fill = linienfarbe[durchgang], tag="line_point", width=2)
             x += step_x
         except:
             print("Exception x:",x, "old_x: ",old_x)
@@ -156,10 +158,10 @@ def scope(cv, x, step_x, id):
         # hier auch Frequenz zurücksetzen
         x = 0
         id = None
-
+        durchgang=durchgang+1
 
 #    cv.after(20, scope, cv, x, step_x, id)
-    if startstop==1:
+    if startstop==1 and durchgang < len(linienfarbe):
         cvjob = cv.after(20, scope, cv, x, step_x, id)
     else:
         print("Gestoppt!")
@@ -252,9 +254,10 @@ korr_label=tk.Label(sframe, text="Korrekturfator:")
 korr_label.grid(row=0, column=1)
 
 e = Entry(sframe, bg="white",relief=SUNKEN, width=5, textvariable=korr_var)
-korr_var.set(1)
+korr_var.set("1.0")
 e.grid(row=0, column=2)
 
+durchgang=0
 cvjob = None
 scope(cv, 0, step_x, None)
 print ("Fertig")
