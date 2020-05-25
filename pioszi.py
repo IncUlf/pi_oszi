@@ -132,15 +132,17 @@ def scope(cv, x, step_x, id):
         counter.set("Frequenz: "+str(freqliste[x]))
         old_x=0
         try:
-            SoundPlayer.playTone(freqliste[x], 0.75, False, dev)
+            SoundPlayer.playTone(freqliste[x], 2, False, dev) #hier auch Zeit einstellen
             #SoundPlayer.playTone(300, 2, False, dev)
             mp=0
             messcounter=0
             while SoundPlayer.isPlaying():
                 #print("Warte:..",SoundPlayer.isPlaying())
-                mp=measure_point()
+                mp=mp+measure_point()
                 messcounter=messcounter+1
-            old_x=x-step_x
+            mp=mp/messcounter #Mittelwert bilden
+
+            old_x=x-step_x            
             if old_x < 0:
                 old_x=0
             messwert.set("Messwert: "+str(round(mp,2))+"V")
