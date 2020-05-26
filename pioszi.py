@@ -22,7 +22,7 @@ h=800
 nulloffset=800
 faktor=0.81
 
-linienfarbe=["black","red","blue","green","yellow","grey"]
+linienfarbe=["black","red","blue","green","pink","grey"]
 zuschlag=140
 wh=w/3
 ltext=["10Hz","100Hz","1kHz","10kHz","20kHz"]
@@ -140,14 +140,14 @@ def scope(cv, x, step_x, id):
         counter.set("Frequenz: "+str(freqliste[x]))
         old_x=0
         try:
-            SoundPlayer.playTone(freqliste[x], 1, False, dev) #hier auch Zeit einstellen
+            SoundPlayer.playTone(freqliste[x], 2, False, dev) #hier auch Zeit einstellen
             #SoundPlayer.playTone(300, 2, False, dev)
             mp=0
-            messcounter=0
+            messcounter=0 #Mittelwert
             while SoundPlayer.isPlaying():
                 #print("Warte:..",SoundPlayer.isPlaying())
-                mp=mp+measure_point()
-                messcounter += 1
+                mp += measure_point() #Mittelwert
+                messcounter += 1      #Mittelwert
             mp=mp/messcounter #Mittelwert bilden
 
             old_x=x-step_x            
