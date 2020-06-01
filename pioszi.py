@@ -4,6 +4,7 @@ import tkinter as tk
 #from tkinter.ttk import Frame, Button, Style
 from tkinter import *
 import math
+from statistics import median
 
 import RPi.GPIO as GPIO
 GPIO.setwarnings(False)
@@ -144,12 +145,20 @@ def scope(cv, x, step_x, id):
             #SoundPlayer.playTone(300, 2, False, dev)
             mp=0
             messcounter=0 #Mittelwert
+            mess_liste=[] #Liste
             while SoundPlayer.isPlaying():
                 #print("Warte:..",SoundPlayer.isPlaying())
-                mp += measure_point() #Mittelwert
+                #mp += measure_point() #Mittelwert
                 messcounter += 1      #Mittelwert
-            mp=mp/messcounter #Mittelwert bilden
-
+                mess_liste.append(measure_point())
+                #print("Sound ",freqliste[x]," Hz")
+            #mp=mp/messcounter #Mittelwert bilden
+            #mess_liste.remove(max(mess_liste))
+            #mess_liste.remove(min(mess_liste))
+            #messcounter -= 2
+            mp=median(mess_liste)
+            #DEBUG Ausgaben
+            #print("Listenlänge: ",len(mess_liste)," Max: ",max(mess_liste)," Min: ",min(mess_liste), "Mid: ",mp)
             old_x=x-step_x            
             if old_x < 0:
                 old_x=0
