@@ -46,19 +46,13 @@ akt_time=time.time()
 while stream.is_active() and (akt_time+DAUER)>time.time():
     time.sleep(0.1)   
 
-stream.stop_stream()
-
 freq=440
-stream.start_stream()
 akt_time=time.time()
 
 while stream.is_active() and (akt_time+DAUER)>time.time():
     time.sleep(0.1)   
 
-stream.stop_stream()
-
 freq=880
-stream.start_stream()
 akt_time=time.time()
 
 while stream.is_active() and (akt_time+DAUER)>time.time():
