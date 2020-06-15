@@ -23,8 +23,8 @@ freq = 220
 #CHUNK = 1024
 CHUNK = 8192
 lastchunk = 0
-DAUER=1.0 #Sekunden
-VOL=2.0
+DAUER=2.0 #Sekunden
+VOL=1.0
 
 dev=0
 
@@ -69,11 +69,16 @@ def startstop_callback():
         if cvjob is not None:
             cv.after_cancel(cvjob)
             cvjob = None
+        if not stream.is_active():
+            stream.start_stream()
     else:
         b["text"]="Stop"
         startstop=1
         linedrop=1
-        scope(cv, 0, step_x, None)       
+        scope(cv, 0, step_x, None)
+        if stream.is_active():
+            stream.stop_stream()
+
 #ende startstop_callback()
 
 def audio_callback(in_data, frame_count, time_info, status):
@@ -176,10 +181,7 @@ def scope(cv, x, step_x, id):
         counter.set("Frequenz: "+str(freqliste[x]))
         old_x=0
         try:
-            #SoundPlayer.playTone(freqliste[x], 2, False, dev) #hier auch Zeit einstellen
             freq = freqliste[x]
-            stream.start_stream()
-
             mp=0
             messcounter=0 #Mittelwert
             mess_liste=[] #Liste
@@ -187,12 +189,9 @@ def scope(cv, x, step_x, id):
 
             while stream.is_active() and (akt_time+DAUER)>time.time():
                 time.sleep(0.1)   
-                #print("Warte:..",SoundPlayer.isPlaying())
-                #mp += measure_point() #Mittelwert
-                messcounter += 1      #Mittelwert
                 mess_liste.append(measure_point())
                 #print("Sound ",freqliste[x]," Hz")
-            stream.stop_stream()
+            #stream.stop_stream()
 
             mp=median(mess_liste)
             #DEBUG Ausgaben
@@ -201,7 +200,7 @@ def scope(cv, x, step_x, id):
             if old_x < 0:
                 old_x=0
             messwert.set("Messwert: "+str(round(mp,2))+"V")
-            messpunkte.set("Messpunke: "+str(messcounter))
+            messpunkte.set("Messpunke: "+str(len(mess_liste)))
             id = cv.create_line(frequenz_koord(freqliste[old_x]), last_y , frequenz_koord(freqliste[x]), dbv_coordinate(mp*korr_faktor), fill = linienfarbe[durchgang], tag="line_point"+str(durchgang), width=2)
             x += step_x
         except:
@@ -320,6 +319,7 @@ stream = p.open(format=pyaudio.paFloat32,
             frames_per_buffer=CHUNK,
             output=True,
             stream_callback=audio_callback)
+stream.start_stream()
 
 scope(cv, 0, step_x, None)
 print ("Fertig")
