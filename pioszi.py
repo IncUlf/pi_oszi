@@ -12,8 +12,20 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(9, GPIO.OUT)
 GPIO.setup(11, GPIO.IN)
 
-from soundplayer import SoundPlayer
+#from soundplayer import SoundPlayer
+import pyaudio
+import numpy as np
 import time
+
+CHANNELS = 1
+RATE = 44100
+freq = 220
+#CHUNK = 1024
+CHUNK = 8192
+lastchunk = 0
+DAUER=1.0 #Sekunden
+VOL=2.0
+
 dev=0
 
 step_x = 1
@@ -32,6 +44,22 @@ cvjob = None
 freqliste=[0]*281
 linedrop=0
 
+#def sine(current_time):
+def sine():
+    global freq,lastchunk
+    length = CHUNK
+    factor = float(freq)*2*np.pi/RATE
+    this_chunk = np.arange(length)+lastchunk
+    lastchunk = this_chunk[-1]
+    return np.sin(this_chunk*factor)
+#ende sine()
+
+def get_chunk(): 
+#    data  = sine(time.time())
+    data  = sine()
+    return data * VOL
+#ende get_chunck()
+
 def startstop_callback():
     global cvjob
     global linedrop
@@ -47,12 +75,19 @@ def startstop_callback():
         linedrop=1
         scope(cv, 0, step_x, None)       
 #ende startstop_callback()
+
+def audio_callback(in_data, frame_count, time_info, status):
+    chunk = get_chunk() * 0.25
+    data = chunk.astype(np.float32).tostring()
+    return (data, pyaudio.paContinue)
+#ende audio_callback()
         
 #def scope(cv, x, step_x, id):
 def scope(cv, x, step_x, id):
     global cvjob
     global durchgang
     global linedrop
+    global freq
     
     def measure_point():
         while not GPIO.input(11):
@@ -141,21 +176,24 @@ def scope(cv, x, step_x, id):
         counter.set("Frequenz: "+str(freqliste[x]))
         old_x=0
         try:
-            SoundPlayer.playTone(freqliste[x], 2, False, dev) #hier auch Zeit einstellen
-            #SoundPlayer.playTone(300, 2, False, dev)
+            #SoundPlayer.playTone(freqliste[x], 2, False, dev) #hier auch Zeit einstellen
+            freq = freqliste[x]
+            stream.start_stream()
+
             mp=0
             messcounter=0 #Mittelwert
             mess_liste=[] #Liste
-            while SoundPlayer.isPlaying():
+            akt_time=time.time()
+
+            while stream.is_active() and (akt_time+DAUER)>time.time():
+                time.sleep(0.1)   
                 #print("Warte:..",SoundPlayer.isPlaying())
                 #mp += measure_point() #Mittelwert
                 messcounter += 1      #Mittelwert
                 mess_liste.append(measure_point())
                 #print("Sound ",freqliste[x]," Hz")
-            #mp=mp/messcounter #Mittelwert bilden
-            #mess_liste.remove(max(mess_liste))
-            #mess_liste.remove(min(mess_liste))
-            #messcounter -= 2
+            stream.stop_stream()
+
             mp=median(mess_liste)
             #DEBUG Ausgaben
             #print("Listenlänge: ",len(mess_liste)," Max: ",max(mess_liste)," Min: ",min(mess_liste), "Mid: ",mp)
@@ -274,6 +312,15 @@ e.grid(row=0, column=2)
 
 durchgang=0
 cvjob = None
+
+p = pyaudio.PyAudio()
+stream = p.open(format=pyaudio.paFloat32,
+            channels=CHANNELS,
+            rate=RATE,
+            frames_per_buffer=CHUNK,
+            output=True,
+            stream_callback=audio_callback)
+
 scope(cv, 0, step_x, None)
 print ("Fertig")
 tk.mainloop()
